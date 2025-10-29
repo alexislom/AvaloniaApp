@@ -5,7 +5,7 @@
     x:Class="AvaloniaApp.Views.MainWindow"
     x:DataType="viewModels:MainWindowViewModel"
     xmlns="https://github.com/avaloniaui"
-    xmlns:oxy="clr-namespace:OxyPlot.Avalonia;assembly=OxyPlot.Avalonia"
+    xmlns:avalonia="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
     xmlns:viewModels="clr-namespace:AvaloniaApp.ViewModels"
     xmlns:vm="using:AvaloniaApp.ViewModels"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
@@ -14,51 +14,45 @@
         <vm:MainWindowViewModel />
     </Window.DataContext>
 
-    <Grid ColumnDefinitions="250,*,Auto" RowDefinitions="Auto,*">
-        <!--  Список функций  -->
-        <StackPanel Grid.Row="1" Margin="10">
-            <TextBlock FontWeight="Bold" Text="Функцииbbb:" />
-            <ListBox ItemsSource="{Binding Functions}" SelectedItem="{Binding SelectedFunction}">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding Name}" />
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-            <StackPanel Orientation="Horizontal" Spacing="5">
-                <Button Command="{Binding AddFunctionCommand}" Content="Добавить" />
-                <Button Command="{Binding RemoveFunctionCommand}" Content="Удалить" />
+    <Grid ColumnDefinitions="*, 320">
+        <avalonia:CartesianChart
+            Grid.Column="0"
+            Margin="10"
+            Series="{Binding Series}"
+            XAxes="{Binding XAxes}"
+            YAxes="{Binding YAxes}"
+            ZoomMode="Both" />
+        <DockPanel Background="DarkGreen" Grid.Column="1">
+            <StackPanel
+                DockPanel.Dock="Top"
+                Orientation="Horizontal"
+                Spacing="6">
+                <Button Command="{Binding AddPointCommand}" Content="Добавить" />
+                <Button Command="{Binding RemovePointCommand}" Content="Удалить выбранную" />
             </StackPanel>
-        </StackPanel>
-
-        <!--  Таблица точек  -->
-        <DataGrid
-            AutoGenerateColumns="False"
-            Grid.Column="1"
-            Grid.Row="1"
-            ItemsSource="{Binding SelectedFunction.Nodes}"
-            Margin="10">
-            <DataGrid.Columns>
-                <DataGridTextColumn
-                    Binding="{Binding X, Mode=TwoWay}"
-                    Header="X"
-                    Width="*" />
-                <DataGridTextColumn
-                    Binding="{Binding Y, Mode=TwoWay}"
-                    Header="Y"
-                    Width="*" />
-            </DataGrid.Columns>
-        </DataGrid>
-
-        <!--  График с поддержкой Drag & Drop  -->
-        <oxy:PlotView
-            Grid.Column="2"
-            Grid.Row="1"
-            Margin="8"
-            Model="{Binding SelectedFunction.PlotModel}"
-            PointerMoved="PlotView_PointerMoved"
-            PointerPressed="PlotView_PointerPressed"
-            PointerReleased="PlotView_PointerReleased"
-            x:Name="PlotView" />
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <DataGrid
+                    AutoGenerateColumns="False"
+                    Background="BlueViolet"
+                    Foreground="CornflowerBlue"
+                    GridLinesVisibility="All"
+                    HeadersVisibility="Column"
+                    ItemsSource="{Binding Points}"
+                    Margin="0,5,0,0"
+                    SelectedItem="{Binding SelectedPoint, Mode=TwoWay}"
+                    SelectionMode="Single">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn
+                            Binding="{Binding X}"
+                            Header="X"
+                            Width="*" />
+                        <DataGridTextColumn
+                            Binding="{Binding Y}"
+                            Header="Y"
+                            Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </ScrollViewer>
+        </DockPanel>
     </Grid>
 </Window>
