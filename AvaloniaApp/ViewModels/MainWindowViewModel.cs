@@ -3,7 +3,6 @@ using System.Linq;
 using System.Windows.Input;
 using AvaloniaApp.Models;
 using LiveChartsCore;
-using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using LiveChartsCore.SkiaSharpView.Painting.Effects;
@@ -14,11 +13,9 @@ namespace AvaloniaApp.ViewModels;
 
 public class MainWindowViewModel : ReactiveObject
 {
-    private PointModel? _selectedPoint;
     private bool _hasUnsavedChanges;
-    public ObservableCollection<PointModel> Points { get; set; }
-    public ISeries[] Series { get; set; }
-
+    private FunctionViewModel? _selectedFunction;
+    public ISeries[] Series { get; private set; }
     public Axis[] XAxes { get; set; } =
     [
         new()
@@ -30,7 +27,6 @@ public class MainWindowViewModel : ReactiveObject
             SeparatorsPaint = new SolidColorPaint(SKColors.LightSlateGray) { StrokeThickness = 2 }
         }
     ];
-
     public Axis[] YAxes { get; set; } =
     [
         new()
@@ -46,65 +42,61 @@ public class MainWindowViewModel : ReactiveObject
             }
         }
     ];
-    public PointModel? SelectedPoint
-    {
-        get => _selectedPoint;
-        set => this.RaiseAndSetIfChanged(ref _selectedPoint, value);
-    }
     public bool HasUnsavedChanges
     {
         get => _hasUnsavedChanges;
         set => this.RaiseAndSetIfChanged(ref _hasUnsavedChanges, value);
     }
-
-    public ICommand AddPointCommand { get; }
-    public ICommand RemovePointCommand { get; }
+    public ObservableCollection<FunctionViewModel> Functions { get; } = new();
+    public FunctionViewModel? SelectedFunction
+    {
+        get => _selectedFunction;
+        set => this.RaiseAndSetIfChanged(ref _selectedFunction, value);
+    }
+    public ICommand AddFunctionCommand { get; }
+    public ICommand RemoveFunctionCommand { get; }
 
     public MainWindowViewModel()
     {
-        Points = new ObservableCollection<PointModel>
-        {
-            new() { X = "0", Y = "0"},
-            new() { X = "1", Y = "2" },
-            new() { X = "2", Y = "1" }
-        };
-        Series =
-        [
-            new LineSeries<ObservablePoint>
-            {
-                Values =
-                [
-                    new(0, 0),
-                    new(1, 2),
-                    new(2, 1),
-                    new(-2, -10)
-                ],
-                Name = "Function 1"
-            },
-            new LineSeries<ObservablePoint>
-            {
-                Values =
-                [
-                    new(0, 1),
-                    new(1, 3),
-                    new(2, 2)
-                ],
-                Name = "Function 2"
-            }
-        ];
-        AddPointCommand = ReactiveCommand.Create(AddPoint);
-        RemovePointCommand = ReactiveCommand.Create(RemovePoint);
+        AddFunctionCommand = ReactiveCommand.Create(AddFunction);
+        RemoveFunctionCommand = ReactiveCommand.Create(RemoveFunction);
+        var f1 = new FunctionViewModel("f₁(x)");
+        f1.Points.Add(new PointModel { X = "0", Y = "0" });
+        f1.Points.Add(new PointModel { X = "1", Y = "2" });
+        f1.Points.Add(new PointModel { X = "2", Y = "1" });
+
+        var f2 = new FunctionViewModel("f₂(x)");
+        f2.Points.Add(new PointModel { X = "0", Y = "1" });
+        f2.Points.Add(new PointModel { X = "1", Y = "3" });
+        f2.Points.Add(new PointModel { X = "2", Y = "2" });
+
+        Functions.Add(f1);
+        Functions.Add(f2);
+
+        SelectedFunction = f1;
+        
+        Series = Functions.Select(f => f.Series).ToArray();
     }
 
-    private void AddPoint()
+    private void AddFunction()
     {
-        var nextX = Points.Any() ? Points.Max(p => p.X) + "1" : "0";
-        Points.Add(new PointModel {X = nextX, Y = "0" });
+        var f = new FunctionViewModel($"F{Functions.Count + 1}(x)");
+        f.Points.Add(new PointModel { X = "0", Y = "0" });
+        f.Points.Add(new PointModel { X = "1", Y = "1" });
+
+        Functions.Add(f);
+        Series = Functions.Select(x => x.Series).ToArray();
+        this.RaisePropertyChanged(nameof(Series));
     }
 
-    private void RemovePoint()
+    private void RemoveFunction()
     {
-        if (SelectedPoint != null)
-            Points.Remove(SelectedPoint);
+        if (SelectedFunction == null)
+            return;
+
+        Functions.Remove(SelectedFunction);
+        SelectedFunction = Functions.FirstOrDefault();
+        Series = Functions.Select(x => x.Series).ToArray();
+        this.RaisePropertyChanged(nameof(Series));
     }
 }

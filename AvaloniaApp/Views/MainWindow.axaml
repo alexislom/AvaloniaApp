@@ -16,6 +16,7 @@
     </Window.DataContext>
 
     <Grid ColumnDefinitions="*, 300">
+        <!--  Левая часть: график  -->
         <avalonia:CartesianChart
             Grid.Column="0"
             Margin="10"
@@ -23,92 +24,129 @@
             XAxes="{Binding XAxes}"
             YAxes="{Binding YAxes}"
             ZoomMode="Both" />
-        <DockPanel Grid.Column="1" LastChildFill="True">
-            <StackPanel
-                DockPanel.Dock="Top"
-                Orientation="Horizontal"
-                Spacing="6">
-                <Button Command="{Binding AddPointCommand}" Content="Добавить" />
-                <Button Command="{Binding RemovePointCommand}" Content="Удалить выбранную" />
-            </StackPanel>
-            <Border
-                BorderThickness="1"
-                CornerRadius="4"
-                Margin="5">
-                <DataGrid
-                    AutoGenerateColumns="False"
-                    CanUserReorderColumns="False"
-                    CanUserResizeColumns="False"
-                    CanUserSortColumns="False"
-                    GridLinesVisibility="All"
-                    HeadersVisibility="Column"
-                    HorizontalAlignment="Stretch"
-                    ItemsSource="{Binding Points}"
-                    Margin="5"
-                    SelectedItem="{Binding SelectedPoint, Mode=TwoWay}"
-                    SelectionMode="Single"
-                    VerticalAlignment="Stretch"
-                    behaviours:DataGridEditOnClickBehavior.EnableEditOnClick="True">
-                    <DataGrid.Columns>
-                        <DataGridTemplateColumn Header="X" Width="*">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock
-                                        HorizontalAlignment="Center"
-                                        Text="{Binding X}"
-                                        VerticalAlignment="Center" />
+        <!--  Правая часть: вкладки функций  -->
+        <DockPanel Grid.Column="1" Margin="5">
+            <!--  Вкладки сверху  -->
+            <DockPanel DockPanel.Dock="Top">
+                <ScrollViewer
+                    Height="36"
+                    HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollBarVisibility="Disabled">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <!--  Кнопка добавления новой функции  -->
+                        <Button
+                            Command="{Binding AddFunctionCommand}"
+                            Content="+"
+                            Height="32"
+                            ToolTip.Tip="Добавить новую функцию"
+                            Width="32" />
+                        <!--  Контейнер вкладок  -->
+                        <TabControl
+                            ItemsSource="{Binding Functions}"
+                            MinWidth="200"
+                            SelectedItem="{Binding SelectedFunction, Mode=TwoWay}"
+                            VerticalAlignment="Stretch">
+                            <TabControl.ItemTemplate>
+                                <DataTemplate x:DataType="viewModels:FunctionViewModel">
+                                    <TextBlock Margin="8,0" Text="{Binding Name}" />
                                 </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                            <DataGridTemplateColumn.CellEditingTemplate>
-                                <DataTemplate>
-                                    <Border
-                                        Background="Transparent"
-                                        HorizontalAlignment="Stretch"
-                                        VerticalAlignment="Stretch">
-                                        <TextBox
-                                            BorderThickness="0"
-                                            HorizontalAlignment="Stretch"
-                                            Padding="0"
-                                            Text="{Binding X, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                            TextAlignment="Center"
-                                            VerticalAlignment="Stretch"
-                                            VerticalContentAlignment="Center"
-                                            behaviours:NumericInputBehavior.EnableNumericValidation="True" />
-                                    </Border>
+                            </TabControl.ItemTemplate>
+                            <TabControl.ContentTemplate>
+                                <DataTemplate x:DataType="viewModels:FunctionViewModel">
+                                    <!--  Контент каждой вкладки  -->
+                                    <DockPanel>
+                                        <StackPanel
+                                            DockPanel.Dock="Top"
+                                            Orientation="Horizontal"
+                                            Spacing="6">
+                                            <Button Command="{Binding AddPointCommand}" Content="Добавить точку" />
+                                            <Button Command="{Binding RemovePointCommand}" Content="Удалить выбранную точку" />
+                                        </StackPanel>
+                                        <Border
+                                            BorderThickness="1"
+                                            CornerRadius="4"
+                                            Margin="5">
+                                            <DataGrid
+                                                AutoGenerateColumns="False"
+                                                CanUserReorderColumns="False"
+                                                CanUserResizeColumns="False"
+                                                CanUserSortColumns="False"
+                                                GridLinesVisibility="All"
+                                                HeadersVisibility="Column"
+                                                HorizontalAlignment="Stretch"
+                                                ItemsSource="{Binding Points}"
+                                                Margin="5"
+                                                SelectedItem="{Binding SelectedPoint, Mode=TwoWay}"
+                                                SelectionMode="Single"
+                                                VerticalAlignment="Stretch"
+                                                behaviours:DataGridEditOnClickBehavior.EnableEditOnClick="True">
+                                                <DataGrid.Columns>
+                                                    <DataGridTemplateColumn Header="X" Width="*">
+                                                        <DataGridTemplateColumn.CellTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock
+                                                                    HorizontalAlignment="Center"
+                                                                    Text="{Binding X}"
+                                                                    VerticalAlignment="Center" />
+                                                            </DataTemplate>
+                                                        </DataGridTemplateColumn.CellTemplate>
+                                                        <DataGridTemplateColumn.CellEditingTemplate>
+                                                            <DataTemplate>
+                                                                <Border
+                                                                    Background="Transparent"
+                                                                    HorizontalAlignment="Stretch"
+                                                                    VerticalAlignment="Stretch">
+                                                                    <TextBox
+                                                                        BorderThickness="0"
+                                                                        HorizontalAlignment="Stretch"
+                                                                        Padding="0"
+                                                                        Text="{Binding X, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                        TextAlignment="Center"
+                                                                        VerticalAlignment="Stretch"
+                                                                        VerticalContentAlignment="Center"
+                                                                        behaviours:NumericInputBehavior.EnableNumericValidation="True" />
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </DataGridTemplateColumn.CellEditingTemplate>
+                                                    </DataGridTemplateColumn>
+                                                    <DataGridTemplateColumn Header="Y" Width="*">
+                                                        <DataGridTemplateColumn.CellTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock
+                                                                    HorizontalAlignment="Center"
+                                                                    Text="{Binding Y}"
+                                                                    VerticalAlignment="Center" />
+                                                            </DataTemplate>
+                                                        </DataGridTemplateColumn.CellTemplate>
+                                                        <DataGridTemplateColumn.CellEditingTemplate>
+                                                            <DataTemplate>
+                                                                <Border
+                                                                    Background="Transparent"
+                                                                    HorizontalAlignment="Stretch"
+                                                                    VerticalAlignment="Stretch">
+                                                                    <TextBox
+                                                                        BorderThickness="0"
+                                                                        HorizontalAlignment="Stretch"
+                                                                        Padding="0"
+                                                                        Text="{Binding Y, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                        TextAlignment="Center"
+                                                                        VerticalAlignment="Stretch"
+                                                                        VerticalContentAlignment="Center"
+                                                                        behaviours:NumericInputBehavior.EnableNumericValidation="True" />
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </DataGridTemplateColumn.CellEditingTemplate>
+                                                    </DataGridTemplateColumn>
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                        </Border>
+                                    </DockPanel>
                                 </DataTemplate>
-                            </DataGridTemplateColumn.CellEditingTemplate>
-                        </DataGridTemplateColumn>
-                        <DataGridTemplateColumn Header="Y" Width="*">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock
-                                        HorizontalAlignment="Center"
-                                        Text="{Binding Y}"
-                                        VerticalAlignment="Center" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                            <DataGridTemplateColumn.CellEditingTemplate>
-                                <DataTemplate>
-                                    <Border
-                                        Background="Transparent"
-                                        HorizontalAlignment="Stretch"
-                                        VerticalAlignment="Stretch">
-                                        <TextBox
-                                            BorderThickness="0"
-                                            HorizontalAlignment="Stretch"
-                                            Padding="0"
-                                            Text="{Binding Y, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                            TextAlignment="Center"
-                                            VerticalAlignment="Stretch"
-                                            VerticalContentAlignment="Center"
-                                            behaviours:NumericInputBehavior.EnableNumericValidation="True" />
-                                    </Border>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellEditingTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Border>
+                            </TabControl.ContentTemplate>
+                        </TabControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
         </DockPanel>
     </Grid>
 </Window>
