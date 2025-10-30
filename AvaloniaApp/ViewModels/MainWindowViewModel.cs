@@ -15,6 +15,7 @@ namespace AvaloniaApp.ViewModels;
 public class MainWindowViewModel : ReactiveObject
 {
     private PointModel? _selectedPoint;
+    private bool _hasUnsavedChanges;
     public ObservableCollection<PointModel> Points { get; set; }
     public ISeries[] Series { get; set; }
 
@@ -45,11 +46,15 @@ public class MainWindowViewModel : ReactiveObject
             }
         }
     ];
-
     public PointModel? SelectedPoint
     {
         get => _selectedPoint;
         set => this.RaiseAndSetIfChanged(ref _selectedPoint, value);
+    }
+    public bool HasUnsavedChanges
+    {
+        get => _hasUnsavedChanges;
+        set => this.RaiseAndSetIfChanged(ref _hasUnsavedChanges, value);
     }
 
     public ICommand AddPointCommand { get; }
@@ -59,9 +64,9 @@ public class MainWindowViewModel : ReactiveObject
     {
         Points = new ObservableCollection<PointModel>
         {
-            new() { X = 0, Y = 0 },
-            new() { X = 1, Y = 2 },
-            new() { X = 2, Y = 1 }
+            new() { X = "0", Y = "0"},
+            new() { X = "1", Y = "2" },
+            new() { X = "2", Y = "1" }
         };
         Series =
         [
@@ -93,8 +98,8 @@ public class MainWindowViewModel : ReactiveObject
 
     private void AddPoint()
     {
-        var nextX = Points.Any() ? Points.Max(p => p.X) + 1 : 0;
-        Points.Add(new PointModel {X = nextX, Y = 0 });
+        var nextX = Points.Any() ? Points.Max(p => p.X) + "1" : "0";
+        Points.Add(new PointModel {X = nextX, Y = "0" });
     }
 
     private void RemovePoint()

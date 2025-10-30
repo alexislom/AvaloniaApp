@@ -6,14 +6,10 @@
     x:DataType="viewModels:MainWindowViewModel"
     xmlns="https://github.com/avaloniaui"
     xmlns:avalonia="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
-    xmlns:converters="clr-namespace:AvaloniaApp.Converters"
+    xmlns:behaviours="clr-namespace:AvaloniaApp.Behaviours"
     xmlns:viewModels="clr-namespace:AvaloniaApp.ViewModels"
     xmlns:vm="using:AvaloniaApp.ViewModels"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-
-    <Window.Resources>
-        <converters:SafeDoubleConverter x:Key="SafeDoubleConverter" />
-    </Window.Resources>
 
     <Window.DataContext>
         <vm:MainWindowViewModel />
@@ -51,29 +47,62 @@
                     Margin="5"
                     SelectedItem="{Binding SelectedPoint, Mode=TwoWay}"
                     SelectionMode="Single"
-                    VerticalAlignment="Stretch">
+                    VerticalAlignment="Stretch"
+                    behaviours:DataGridEditOnClickBehavior.EnableEditOnClick="True">
                     <DataGrid.Columns>
                         <DataGridTemplateColumn Header="X" Width="*">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding X}" />
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        Text="{Binding X}"
+                                        VerticalAlignment="Center" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                             <DataGridTemplateColumn.CellEditingTemplate>
                                 <DataTemplate>
-                                    <TextBox Text="{Binding X, Mode=TwoWay, Converter={StaticResource SafeDoubleConverter}, ConverterParameter={Binding X}}" />
+                                    <Border
+                                        Background="Transparent"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch">
+                                        <TextBox
+                                            BorderThickness="0"
+                                            HorizontalAlignment="Stretch"
+                                            Padding="0"
+                                            Text="{Binding X, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            TextAlignment="Center"
+                                            VerticalAlignment="Stretch"
+                                            VerticalContentAlignment="Center"
+                                            behaviours:NumericInputBehavior.EnableNumericValidation="True" />
+                                    </Border>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellEditingTemplate>
                         </DataGridTemplateColumn>
                         <DataGridTemplateColumn Header="Y" Width="*">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Y}" />
+                                    <TextBlock
+                                        HorizontalAlignment="Center"
+                                        Text="{Binding Y}"
+                                        VerticalAlignment="Center" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                             <DataGridTemplateColumn.CellEditingTemplate>
                                 <DataTemplate>
-                                    <TextBox Text="{Binding Y, Mode=TwoWay, Converter={StaticResource SafeDoubleConverter}, ConverterParameter={Binding Y}}" />
+                                    <Border
+                                        Background="Transparent"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch">
+                                        <TextBox
+                                            BorderThickness="0"
+                                            HorizontalAlignment="Stretch"
+                                            Padding="0"
+                                            Text="{Binding Y, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                            TextAlignment="Center"
+                                            VerticalAlignment="Stretch"
+                                            VerticalContentAlignment="Center"
+                                            behaviours:NumericInputBehavior.EnableNumericValidation="True" />
+                                    </Border>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellEditingTemplate>
                         </DataGridTemplateColumn>
