@@ -50,9 +50,6 @@ public class FunctionViewModel : ReactiveObject
         {
             Name = name,
             LineSmoothness = 0,
-            GeometrySize = 8,
-            Stroke = null,
-            Fill = null,
             Values = new ObservableCollection<ObservablePoint>()
         };
 
