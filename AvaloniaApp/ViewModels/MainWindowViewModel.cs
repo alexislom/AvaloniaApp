@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Input;
+using AvaloniaApp.Models;
 using LiveChartsCore;
 using LiveChartsCore.Defaults;
 using LiveChartsCore.SkiaSharpView;
@@ -13,7 +14,8 @@ namespace AvaloniaApp.ViewModels;
 
 public class MainWindowViewModel : ReactiveObject
 {
-    public ObservableCollection<ObservablePoint> Points { get; set; }
+    private PointModel? _selectedPoint;
+    public ObservableCollection<PointModel> Points { get; set; }
     public ISeries[] Series { get; set; }
 
     public Axis[] XAxes { get; set; } =
@@ -44,17 +46,22 @@ public class MainWindowViewModel : ReactiveObject
         }
     ];
 
-    public ObservablePoint? SelectedPoint { get; set; }
+    public PointModel? SelectedPoint
+    {
+        get => _selectedPoint;
+        set => this.RaiseAndSetIfChanged(ref _selectedPoint, value);
+    }
+
     public ICommand AddPointCommand { get; }
     public ICommand RemovePointCommand { get; }
 
     public MainWindowViewModel()
     {
-        Points = new ObservableCollection<ObservablePoint>
+        Points = new ObservableCollection<PointModel>
         {
-            new(0, 0),
-            new(1, 2),
-            new(2, 1)
+            new() { X = 0, Y = 0 },
+            new() { X = 1, Y = 2 },
+            new() { X = 2, Y = 1 }
         };
         Series =
         [
@@ -87,7 +94,7 @@ public class MainWindowViewModel : ReactiveObject
     private void AddPoint()
     {
         var nextX = Points.Any() ? Points.Max(p => p.X) + 1 : 0;
-        Points.Add(new ObservablePoint(nextX, 0));
+        Points.Add(new PointModel {X = nextX, Y = 0 });
     }
 
     private void RemovePoint()

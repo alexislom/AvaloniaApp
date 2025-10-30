@@ -6,15 +6,20 @@
     x:DataType="viewModels:MainWindowViewModel"
     xmlns="https://github.com/avaloniaui"
     xmlns:avalonia="clr-namespace:LiveChartsCore.SkiaSharpView.Avalonia;assembly=LiveChartsCore.SkiaSharpView.Avalonia"
+    xmlns:converters="clr-namespace:AvaloniaApp.Converters"
     xmlns:viewModels="clr-namespace:AvaloniaApp.ViewModels"
     xmlns:vm="using:AvaloniaApp.ViewModels"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Window.Resources>
+        <converters:SafeDoubleConverter x:Key="SafeDoubleConverter" />
+    </Window.Resources>
 
     <Window.DataContext>
         <vm:MainWindowViewModel />
     </Window.DataContext>
 
-    <Grid ColumnDefinitions="*, 320">
+    <Grid ColumnDefinitions="*, 300">
         <avalonia:CartesianChart
             Grid.Column="0"
             Margin="10"
@@ -22,7 +27,7 @@
             XAxes="{Binding XAxes}"
             YAxes="{Binding YAxes}"
             ZoomMode="Both" />
-        <DockPanel Background="DarkGreen" Grid.Column="1">
+        <DockPanel Grid.Column="1" LastChildFill="True">
             <StackPanel
                 DockPanel.Dock="Top"
                 Orientation="Horizontal"
@@ -30,29 +35,51 @@
                 <Button Command="{Binding AddPointCommand}" Content="Добавить" />
                 <Button Command="{Binding RemovePointCommand}" Content="Удалить выбранную" />
             </StackPanel>
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <Border
+                BorderThickness="1"
+                CornerRadius="4"
+                Margin="5">
                 <DataGrid
                     AutoGenerateColumns="False"
-                    Background="BlueViolet"
-                    Foreground="CornflowerBlue"
+                    CanUserReorderColumns="False"
+                    CanUserResizeColumns="False"
+                    CanUserSortColumns="False"
                     GridLinesVisibility="All"
                     HeadersVisibility="Column"
+                    HorizontalAlignment="Stretch"
                     ItemsSource="{Binding Points}"
-                    Margin="0,5,0,0"
+                    Margin="5"
                     SelectedItem="{Binding SelectedPoint, Mode=TwoWay}"
-                    SelectionMode="Single">
+                    SelectionMode="Single"
+                    VerticalAlignment="Stretch">
                     <DataGrid.Columns>
-                        <DataGridTextColumn
-                            Binding="{Binding X}"
-                            Header="X"
-                            Width="*" />
-                        <DataGridTextColumn
-                            Binding="{Binding Y}"
-                            Header="Y"
-                            Width="*" />
+                        <DataGridTemplateColumn Header="X" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding X}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                            <DataGridTemplateColumn.CellEditingTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding X, Mode=TwoWay, Converter={StaticResource SafeDoubleConverter}, ConverterParameter={Binding X}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellEditingTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Header="Y" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Y}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                            <DataGridTemplateColumn.CellEditingTemplate>
+                                <DataTemplate>
+                                    <TextBox Text="{Binding Y, Mode=TwoWay, Converter={StaticResource SafeDoubleConverter}, ConverterParameter={Binding Y}}" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellEditingTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
-            </ScrollViewer>
+            </Border>
         </DockPanel>
     </Grid>
 </Window>
