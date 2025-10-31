@@ -121,8 +121,8 @@
                                                                 Text="{Binding X, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                                 TextAlignment="Center"
                                                                 VerticalAlignment="Stretch"
-                                                                VerticalContentAlignment="Center"
-                                                                behaviours:NumericInputBehavior.EnableNumericValidation="True" />
+                                                                VerticalContentAlignment="Center" />
+                                                            <!--  behaviours:NumericInputBehavior.EnableNumericValidation="True" />  -->
                                                         </Border>
                                                     </DataTemplate>
                                                 </DataGridTemplateColumn.CellEditingTemplate>
@@ -149,8 +149,8 @@
                                                                 Text="{Binding Y, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                                 TextAlignment="Center"
                                                                 VerticalAlignment="Stretch"
-                                                                VerticalContentAlignment="Center"
-                                                                behaviours:NumericInputBehavior.EnableNumericValidation="True" />
+                                                                VerticalContentAlignment="Center" />
+                                                            <!--  behaviours:NumericInputBehavior.EnableNumericValidation="True" />  -->
                                                         </Border>
                                                     </DataTemplate>
                                                 </DataGridTemplateColumn.CellEditingTemplate>

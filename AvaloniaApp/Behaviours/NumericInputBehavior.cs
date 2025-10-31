@@ -94,25 +94,45 @@ public class NumericInputBehavior : AvaloniaObject
     
     private static void Normalize(TextBox tb)
     {
-        var text = tb.Text?.Trim() ?? string.Empty;
+        // var text = tb.Text?.Trim() ?? string.Empty;
+        //
+        // if (StrictPattern.IsMatch(text) &&
+        //     double.TryParse(text.Replace(',', '.'),
+        //         NumberStyles.Float,
+        //         CultureInfo.InvariantCulture,
+        //         out var parsed))
+        // {
+        //     if (parsed == 0 && text.StartsWith("-"))
+        //     {
+        //         tb.Text = "0";
+        //         return;
+        //     }
+        //
+        //     tb.Text = parsed.ToString(CultureInfo.InvariantCulture);
+        // }
+        // else
+        // {
+        //     tb.Text = "0";
+        // }
+        //
+        var oldText = tb.Text?.Trim() ?? string.Empty;
+        var normalized = oldText;
 
-        if (StrictPattern.IsMatch(text) &&
-            double.TryParse(text.Replace(',', '.'),
+        if (StrictPattern.IsMatch(oldText) &&
+            double.TryParse(oldText.Replace(',', '.'),
                 NumberStyles.Float,
                 CultureInfo.InvariantCulture,
                 out var parsed))
         {
-            if (parsed == 0 && text.StartsWith("-"))
-            {
-                tb.Text = "0";
-                return;
-            }
-
-            tb.Text = parsed.ToString(CultureInfo.InvariantCulture);
+            normalized = parsed.ToString(CultureInfo.InvariantCulture);
         }
         else
         {
-            tb.Text = "0";
+            normalized = "0";
         }
+
+        // Избегаем лишних PropertyChanged если текст не изменился
+        if (tb.Text != normalized)
+            tb.Text = normalized;
     }
 }
