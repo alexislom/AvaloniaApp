@@ -20,6 +20,6 @@ public class PointModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _y, value);
     }
 
-    public double XValue => double.TryParse(X, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : 0;
-    public double YValue => double.TryParse(Y, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : 0;
+    public double XValue => double.TryParse(X, NumberStyles.Float, CultureInfo.InvariantCulture, out var x) ? x : 0;
+    public double YValue => double.TryParse(Y, NumberStyles.Float, CultureInfo.InvariantCulture, out var y) ? y : 0;
 }

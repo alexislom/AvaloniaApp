@@ -1,7 +1,10 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Windows.Input;
-using AvaloniaApp.Models;
+using DynamicData;
+using DynamicData.Binding;
 using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
@@ -13,9 +16,17 @@ namespace AvaloniaApp.ViewModels;
 
 public class MainWindowViewModel : ReactiveObject
 {
-    private bool _hasUnsavedChanges;
+    private readonly SourceList<FunctionViewModel> _functionsSource = new();
+    private ReadOnlyObservableCollection<FunctionViewModel> _functions;
     private FunctionViewModel? _selectedFunction;
-    public ISeries[] Series { get; private set; }
+    private ISeries[] _series = [];
+    private bool _hasUnsavedChanges;
+    
+    public ISeries[] Series
+    {
+        get => _series;
+        private set => this.RaiseAndSetIfChanged(ref _series, value);
+    }
     public Axis[] XAxes { get; set; } =
     [
         new()
@@ -42,12 +53,17 @@ public class MainWindowViewModel : ReactiveObject
             }
         }
     ];
+    public DrawMarginFrame DrawMarginFrame => new()
+    {
+        Stroke = new SolidColorPaint(SKColors.Black, 3)
+    };
+    public ReadOnlyObservableCollection<FunctionViewModel> Functions => _functions;
     public bool HasUnsavedChanges
     {
         get => _hasUnsavedChanges;
         set => this.RaiseAndSetIfChanged(ref _hasUnsavedChanges, value);
     }
-    public ObservableCollection<FunctionViewModel> Functions { get; } = new();
+    
     public FunctionViewModel? SelectedFunction
     {
         get => _selectedFunction;
@@ -58,35 +74,41 @@ public class MainWindowViewModel : ReactiveObject
 
     public MainWindowViewModel()
     {
+        // Реактивное обновление графиков при любых изменениях функций
+        _functionsSource
+            .Connect()
+            // При изменении IsInverseVisible или SeriesArray обновляем графики
+            .AutoRefresh(f => f.IsInverseVisible)
+            .AutoRefresh(f => f.SeriesArray)
+            // Следим за изменениями внутри Points каждой функции
+            .AutoRefreshOnObservable(f => f.Points
+                .ToObservableChangeSet()
+                .AutoRefresh(p => p.X)
+                .AutoRefresh(p => p.Y)
+                .Throttle(TimeSpan.FromMilliseconds(150))
+            )
+            .Throttle(TimeSpan.FromMilliseconds(100))
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Bind(out _functions)
+            .Subscribe(_ =>
+            {
+                UpdateSeries();
+                
+                if (!_functions.Any()) 
+                {
+                    ClearSeries(); // вызываем метод, чтобы RaisePropertyChanged точно сработал
+                }
+            });
+
         AddFunctionCommand = ReactiveCommand.Create(AddFunction);
         RemoveFunctionCommand = ReactiveCommand.Create(RemoveFunction);
-        var f1 = new FunctionViewModel("f₁(x)");
-        f1.Points.Add(new PointModel { X = "0", Y = "0" });
-        f1.Points.Add(new PointModel { X = "1", Y = "2" });
-        f1.Points.Add(new PointModel { X = "2", Y = "1" });
-
-        var f2 = new FunctionViewModel("f₂(x)");
-        f2.Points.Add(new PointModel { X = "0", Y = "1" });
-        f2.Points.Add(new PointModel { X = "1", Y = "3" });
-        f2.Points.Add(new PointModel { X = "2", Y = "2" });
-
-        Functions.Add(f1);
-        Functions.Add(f2);
-
-        SelectedFunction = f1;
-        
-        Series = Functions.Select(f => f.Series).ToArray();
     }
 
     private void AddFunction()
     {
-        var f = new FunctionViewModel($"F{Functions.Count + 1}(x)");
-        f.Points.Add(new PointModel { X = "0", Y = "0" });
-        f.Points.Add(new PointModel { X = "1", Y = "1" });
-
-        Functions.Add(f);
-        Series = Functions.Select(x => x.Series).ToArray();
-        this.RaisePropertyChanged(nameof(Series));
+        var newFunction = new FunctionViewModel($"F{Functions.Count + 1}(x)");
+        _functionsSource.Add(newFunction);
+        // SelectedFunction = newFunction; //???
     }
 
     private void RemoveFunction()
@@ -94,9 +116,17 @@ public class MainWindowViewModel : ReactiveObject
         if (SelectedFunction == null)
             return;
 
-        Functions.Remove(SelectedFunction);
-        SelectedFunction = Functions.FirstOrDefault();
-        Series = Functions.Select(x => x.Series).ToArray();
-        this.RaisePropertyChanged(nameof(Series));
+        _functionsSource.Remove(SelectedFunction);
+        SelectedFunction = Functions.LastOrDefault();
+    }
+    
+    private void UpdateSeries()
+    {
+        Series = Functions.SelectMany(f => f.SeriesArray).ToArray();
+    }
+    
+    private void ClearSeries()
+    {
+        Series = Array.Empty<ISeries>();
     }
 }

@@ -18,12 +18,13 @@
     <Grid ColumnDefinitions="*, 300">
         <!--  Левая часть: график  -->
         <avalonia:CartesianChart
+            DrawMarginFrame="{Binding DrawMarginFrame}"
             Grid.Column="0"
             Margin="10"
             Series="{Binding Series}"
             XAxes="{Binding XAxes}"
             YAxes="{Binding YAxes}"
-            ZoomMode="Both" />
+            ZoomMode="None" />
         <!--  Правая часть: вкладки функций  -->
         <DockPanel
             Grid.Column="1"
@@ -33,7 +34,6 @@
                 <Button
                     Command="{Binding AddFunctionCommand}"
                     Content="+"
-                    Grid.Column="0"
                     Height="32"
                     ToolTip.Tip="Добавить новую функцию"
                     VerticalAlignment="Top"
@@ -41,7 +41,6 @@
                 <Button
                     Command="{Binding RemoveFunctionCommand}"
                     Content="Remove"
-                    Grid.Column="0"
                     Height="32"
                     ToolTip.Tip="Удалить выбранную функцию"
                     VerticalAlignment="Top"
@@ -70,10 +69,16 @@
                             <DockPanel>
                                 <StackPanel
                                     DockPanel.Dock="Top"
-                                    Orientation="Horizontal"
+                                    Orientation="Vertical"
                                     Spacing="6">
                                     <Button Command="{Binding AddPointCommand}" Content="Добавить точку" />
                                     <Button Command="{Binding RemovePointCommand}" Content="Удалить выбранную точку" />
+                                    <ToggleButton
+                                        Content="Показать обратную функцию"
+                                        IsChecked="{Binding IsInverseVisible, Mode=TwoWay}"
+                                        Margin="10,0,0,0"
+                                        VerticalAlignment="Center"
+                                        Width="200" />
                                 </StackPanel>
                                 <Border
                                     BorderThickness="1"
@@ -91,8 +96,8 @@
                                         Margin="5"
                                         SelectedItem="{Binding SelectedPoint, Mode=TwoWay}"
                                         SelectionMode="Single"
-                                        VerticalAlignment="Stretch"
-                                        behaviours:DataGridEditOnClickBehavior.EnableEditOnClick="True">
+                                        VerticalAlignment="Stretch">
+                                        <!--  behaviours:DataGridEditOnClickBehavior.EnableEditOnClick="True">  -->
                                         <DataGrid.Columns>
                                             <DataGridTemplateColumn Header="X" Width="*">
                                                 <DataGridTemplateColumn.CellTemplate>
