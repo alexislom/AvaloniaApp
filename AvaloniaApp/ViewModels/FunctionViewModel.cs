@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Windows.Input;
@@ -21,32 +23,23 @@ namespace AvaloniaApp.ViewModels;
 public class FunctionViewModel : ReactiveObject
 {
     private static readonly Random Random = new();
-    private string _name;
     private LineSeries<ObservablePoint> _series;
     private LineSeries<ObservablePoint>? _inverseSeries;
     private PointModel? _selectedPoint;
     private bool _isInverseVisible;
 
-    public string Name
-    {
-        get => _name;
-        set => this.RaiseAndSetIfChanged(ref _name, value);
-    }
     public ObservableCollection<PointModel> Points { get; } = new();
     public LineSeries<ObservablePoint> Series
     {
         get => _series;
         set => this.RaiseAndSetIfChanged(ref _series, value);
     }
-    public ISeries[] SeriesArray
+    public LineSeries<ObservablePoint>? InverseSeries
     {
-        get
-        {
-            if (_inverseSeries != null && _isInverseVisible)
-                return [_series, _inverseSeries];
-            return [_series];
-        }
+        get => _inverseSeries;
+        private set => this.RaiseAndSetIfChanged(ref _inverseSeries, value);
     }
+    public ObservableCollection<ISeries> SeriesCollection { get; } = new();
     public PointModel? SelectedPoint
     {
         get => _selectedPoint;
@@ -59,49 +52,19 @@ public class FunctionViewModel : ReactiveObject
         {
             this.RaiseAndSetIfChanged(ref _isInverseVisible, value);
             ToggleInverseVisibility(value);
-            this.RaisePropertyChanged(nameof(SeriesArray));
+            this.RaisePropertyChanged(nameof(SeriesCollection));
         }
     }
     public string ColorHex { get; }
     public ICommand AddPointCommand { get; }
     public ICommand RemovePointCommand { get; }
 
-    public FunctionViewModel(string name)
+    public FunctionViewModel()
     {
-        _name = name;
         ColorHex = GenerateRandomColorHex();
-        _series = new LineSeries<ObservablePoint>
-        {
-            Name = name,
-            LineSmoothness = 0,
-            Fill = null,
-            Stroke = new SolidColorPaint(SKColor.Parse(ColorHex)) { StrokeThickness = 4 },
-            GeometrySize = 8,
-            GeometryStroke = new SolidColorPaint(SKColors.Black) { StrokeThickness = 3 },
-            GeometryFill = new SolidColorPaint(SKColor.Parse(ColorHex)),
-            DataLabelsPosition = LiveChartsCore.Measure.DataLabelsPosition.Top,
-            AnimationsSpeed = TimeSpan.FromMilliseconds(100), // минимальная задержка
-            EasingFunction = EasingFunctions.Lineal, // линейное движение
-            Values = new ObservableCollection<ObservablePoint>()
-        };
-        _inverseSeries = new LineSeries<ObservablePoint>
-        {
-            Name = $"{Name}⁻¹(x)",
-            LineSmoothness = 0,
-            GeometrySize = 6,
-            GeometryStroke = new SolidColorPaint(SKColor.Parse(ColorHex)) { StrokeThickness = 2 },
-            GeometryFill = new SolidColorPaint(SKColor.Parse(ColorHex)),
-            Stroke = new SolidColorPaint(SKColor.Parse(ColorHex))
-            {
-                StrokeThickness = 3,
-                PathEffect =new DashEffect([6, 4])
-            },
-            Fill = null,
-            AnimationsSpeed = TimeSpan.FromMilliseconds(100), // минимальная задержка
-            EasingFunction = EasingFunctions.Lineal, // линейное движение
-            Values = new ObservableCollection<ObservablePoint>()
-        };
-        GenerateRandomPoints();
+        Series = CreateSeries(false, []);
+        InverseSeries = CreateSeries(true, []);
+        SeriesCollection.Add(Series);
         Points
             .ToObservableChangeSet()
             .AutoRefresh(p => p.X)
@@ -111,9 +74,11 @@ public class FunctionViewModel : ReactiveObject
             .Subscribe(_ =>
             {
                 UpdateSeries();
-                if (_isInverseVisible)
+                if (IsInverseVisible && CanBuildInverseSeries())
                     UpdateInverseSeries();
             });
+
+        GenerateRandomPoints();
 
         AddPointCommand = ReactiveCommand.Create(AddPoint);
         RemovePointCommand = ReactiveCommand.Create(RemovePoint);
@@ -126,8 +91,8 @@ public class FunctionViewModel : ReactiveObject
 
         Points.Add(new PointModel
         {
-            X = x.ToString("F2"),
-            Y = y.ToString("F2")
+            X = x.ToString("F2", CultureInfo.InvariantCulture),
+            Y = y.ToString("F2", CultureInfo.InvariantCulture)
         });
     }
 
@@ -136,13 +101,38 @@ public class FunctionViewModel : ReactiveObject
         if (SelectedPoint != null)
             Points.Remove(SelectedPoint);
     }
+    
+    private LineSeries<ObservablePoint> CreateSeries(bool isInverse, List<ObservablePoint> points)
+    {
+        var strokeColor = SKColor.Parse(ColorHex);
+
+        return new LineSeries<ObservablePoint>
+        {
+            Name = isInverse ? $"F⁻¹(x)" : "F(x)",
+            LineSmoothness = 0,
+            Fill = null,
+            GeometrySize = isInverse ? 6 : 8,
+            GeometryStroke = new SolidColorPaint(strokeColor) { StrokeThickness = isInverse ? 2 : 3 },
+            GeometryFill = new SolidColorPaint(strokeColor),
+            Stroke = new SolidColorPaint(strokeColor)
+            {
+                StrokeThickness = isInverse ? 3 : 4,
+                PathEffect = isInverse ? new DashEffect(new float[] { 6, 4 }) : null
+            },
+            DataLabelsPosition = LiveChartsCore.Measure.DataLabelsPosition.Top,
+            AnimationsSpeed = TimeSpan.FromMilliseconds(80),
+            EasingFunction = EasingFunctions.Lineal,
+            Values = new ObservableCollection<ObservablePoint>(points)
+        };
+    }
 
     private void UpdateSeries()
     {
         var points = Points
             .Select(p =>
             {
-                if (double.TryParse(p.X, out var x) && double.TryParse(p.Y, out var y))
+                if (double.TryParse(p.X, NumberStyles.Any, CultureInfo.InvariantCulture, out var x) && 
+                    double.TryParse(p.Y, NumberStyles.Any, CultureInfo.InvariantCulture, out var y))
                     return new ObservablePoint(x, y);
                 return null;
             })
@@ -150,31 +140,18 @@ public class FunctionViewModel : ReactiveObject
             .OrderBy(p => p!.X)
             .ToList();
         
-        Series = new LineSeries<ObservablePoint>
-        {
-            Name = _name,
-            LineSmoothness = 0,
-            Fill = null,
-            Stroke = new SolidColorPaint(SKColor.Parse(ColorHex)) { StrokeThickness = 4 },
-            GeometrySize = 8,
-            GeometryStroke = new SolidColorPaint(SKColors.Black) { StrokeThickness = 3 },
-            GeometryFill = new SolidColorPaint(SKColor.Parse(ColorHex)),
-            DataLabelsPosition = LiveChartsCore.Measure.DataLabelsPosition.Top,
-            AnimationsSpeed = TimeSpan.FromMilliseconds(100), // минимальная задержка
-            EasingFunction = EasingFunctions.Lineal, // линейное движение
-            Values = new ObservableCollection<ObservablePoint>(points!)
-        };
+        Series = CreateSeries(isInverse: false, points!);
+        SeriesCollection.Clear();
+        SeriesCollection.Add(Series);
     }
     
     private void UpdateInverseSeries()
     {
-        if (_inverseSeries == null)
-            return;
-
         var inversePoints = Points
             .Select(p =>
             {
-                if (double.TryParse(p.X, out var x) && double.TryParse(p.Y, out var y))
+                if (double.TryParse(p.X, NumberStyles.Any, CultureInfo.InvariantCulture, out var x) && 
+                    double.TryParse(p.Y, NumberStyles.Any, CultureInfo.InvariantCulture, out var y))
                     return new ObservablePoint(y, x); // Change X ↔ Y
                 return null;
             })
@@ -182,44 +159,38 @@ public class FunctionViewModel : ReactiveObject
             .OrderBy(p => p!.X)
             .ToList();
 
-        _inverseSeries = new LineSeries<ObservablePoint>
-        {
-            Name = $"{Name}⁻¹(x)",
-            LineSmoothness = 0,
-            GeometrySize = 6,
-            GeometryStroke = new SolidColorPaint(SKColor.Parse(ColorHex)) { StrokeThickness = 2 },
-            GeometryFill = new SolidColorPaint(SKColor.Parse(ColorHex)),
-            Stroke = new SolidColorPaint(SKColor.Parse(ColorHex))
-            {
-                StrokeThickness = 3,
-                PathEffect =new DashEffect([6, 4])
-            },
-            Fill = null,
-            AnimationsSpeed = TimeSpan.FromMilliseconds(100), // минимальная задержка
-            EasingFunction = EasingFunctions.Lineal, // линейное движение
-            Values = new ObservableCollection<ObservablePoint>(inversePoints!)
-        };
+        InverseSeries = CreateSeries(isInverse: true, inversePoints!);
+        SeriesCollection.Add(InverseSeries);
     }
     
     private bool CanBuildInverseSeries()
     {
-        // var points = Points
-        //     .Select(p => new { p.XValue, p.YValue })
-        //     .OrderBy(p => p.XValue)
-        //     .ToList();
-        //
-        // // Проверим обратимость — функция должна быть инъективной
-        // // (все Y должны быть уникальны)
-        // if (points.Select(p => p.YValue).Distinct().Count() != points.Count)
-        // {
-        //     Console.WriteLine($"Функция {Name} не является обратимой!");
-        //     return;
-        // }
-        var yValues = Points
-            .Select(p => double.TryParse(p.Y, out var y) ? y : double.NaN)
+        // Проверяем, что все точки парсятся корректно
+        var parsedPoints = Points
+            .Select(p => new
+            {
+                X = double.TryParse(p.X, NumberStyles.Any, CultureInfo.InvariantCulture, out var x) ? x : double.NaN,
+                Y = double.TryParse(p.Y, NumberStyles.Any, CultureInfo.InvariantCulture, out var y) ? y : double.NaN
+            })
+            .Where(p => !double.IsNaN(p.X) && !double.IsNaN(p.Y))
             .ToList();
 
-        return yValues.Distinct().Count() == yValues.Count && !yValues.Any(double.IsNaN);
+        // Если меньше двух точек — обратную функцию строить бессмысленно
+        if (parsedPoints.Count < 2)
+            return false;
+
+        // Проверяем, что все X уникальны (иначе исходная функция не является функцией)
+        var uniqueX = parsedPoints.Select(p => p.X).Distinct().Count();
+        if (uniqueX != parsedPoints.Count)
+            return false; // есть одинаковые X
+
+        // Проверяем, что все Y уникальны (иначе функция не является инъективной)
+        var uniqueY = parsedPoints.Select(p => p.Y).Distinct().Count();
+        if (uniqueY != parsedPoints.Count)
+            return false; // есть одинаковые Y, обратной функции не существует
+
+        // Всё ок — функция взаимно однозначная
+        return true;
     }
     
     private void ToggleInverseVisibility(bool show)
@@ -237,9 +208,8 @@ public class FunctionViewModel : ReactiveObject
         }
         else
         {
-            // _inverseSeries = null;
+            SeriesCollection.Remove(InverseSeries!);
         }
-        this.RaisePropertyChanged(nameof(SeriesArray));
     }
     
     private void GenerateRandomPoints()
@@ -260,7 +230,7 @@ public class FunctionViewModel : ReactiveObject
     private async void ShowInverseUnavailableMessage()
     {
         var messageBox = MessageBoxManager
-            .GetMessageBoxStandard("Ошибка", $"Для {Name} невозможно построить обратную функцию (неоднозначные Y).", ButtonEnum.Ok);
+            .GetMessageBoxStandard("Ошибка", $"Для F(x) невозможно построить обратную функцию (неоднозначные Y).", ButtonEnum.Ok);
         var result = await messageBox.ShowAsync();
     }
 }
